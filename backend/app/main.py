@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config.settings import settings
 from app.api.v1 import health
+from app.api.auth import auth
+from app.core.database.users import init_test_users
 
 # Create FastAPI app instance
 app = FastAPI(
@@ -22,6 +24,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(health.router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")
 
 @app.get("/")
 async def root():
@@ -45,10 +48,19 @@ async def api_info():
         "environment": settings.environment,
         "endpoints": {
             "health": "/api/v1/health",
+            "auth": "/api/v1/auth",
             "docs": "/docs",
             "redoc": "/redoc"
         }
     }
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Initialize application on startup
+    """
+    # Initialize test users for development
+    init_test_users()
 
 if __name__ == "__main__":
     import uvicorn
